@@ -2,7 +2,7 @@
 
 #include "EDA.h"
 #include "EDAPlayerController.h"
-
+#include "Player/EdaPlayerCameraManager.h"
 
 
 
@@ -10,6 +10,12 @@ bool AEDAPlayerController::IsGameInputAllowed() const
 {
 	return bAllowGameActions && !bCinematicMode;
 }
+
+AEDAPlayerController::AEDAPlayerController()
+{
+	PlayerCameraManagerClass = AEdaPlayerCameraManager::StaticClass();
+}
+
 void AEDAPlayerController::BeginPlay() {
 	Super::BeginPlay();
 

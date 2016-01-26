@@ -12,8 +12,8 @@ UCLASS()
 class EDA_API AEDAPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
-	
+
+		AEDAPlayerController();
 		/** if set, gameplay related actions (movement, weapn usage, etc) are allowed */
 		uint8 bAllowGameActions : 1;
 public:	

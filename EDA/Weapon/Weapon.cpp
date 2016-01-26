@@ -19,6 +19,8 @@ AWeapon::AWeapon()
 	CurrentAmmoInClip = 10;
 	BurstCounter = 0;
 	LastFireTime = 0.0f;
+	StorageSlot = EInventorySlot::Spine;
+
 }
 
 
@@ -35,6 +37,7 @@ USkeletalMeshComponent* AWeapon::GetWeaponMesh() const
 	{
 		return  weaponMesh;
 	}
+	return NULL;
 }
 
 void AWeapon::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const
@@ -67,6 +70,8 @@ void AWeapon::DetermineWeaponState(EWeaponState NewState)
 	}
 }
 
+
+
 /************************************************************************/
 /* read weapondata                                                                     */
 /************************************************************************/
@@ -97,15 +102,28 @@ int32 AWeapon::GetMaxAmmo() const
 	return WeaponConfig.MaxAmmo;
 }
 
-
-
 void AWeapon::OnRep_MyPawn()
 {
 
 }
 
-
-
+void AWeapon::AttachWeaponToPanwn(EInventorySlot Slot)
+{
+	if (MyPawn)
+	{
+		// Remove and hide
+		DetachMeshFromPawn();
+		USkeletalMeshComponent* PawnMesh = MyPawn->GetMesh();
+		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
+		weaponMesh->SetHiddenInGame(false);
+		weaponMesh->AttachTo(PawnMesh, AttachPoint, EAttachLocation::SnapToTarget);
+	}
+}
+void AWeapon::DetachMeshFromPawn()
+{
+	weaponMesh->DetachFromParent();
+	weaponMesh->SetHiddenInGame(true);
+}
 
 /************************************************************************/
 /* Equip owner                                                          */
@@ -153,16 +171,28 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 // 		PlayWeaponSound(EquipSound);
 // 	}
 }
+void AWeapon::OnUnEquip()
+{
+	bIsEquipped = false;
+	StopFire();
+
+	if (bPendingEquip)
+	{
+		StopWeaponAnimation(EquipAnim);
+		bPendingEquip = false;
+		GetWorldTimerManager().ClearTimer(EquipFinishedTimerHandle);
+	}
+	DetermineWeaponState(EWeaponState::Idle);
+}
 
 void AWeapon::OnEquipFinished()
 {
 	DetermineWeaponState(EWeaponState::Idle);
+	AttachWeaponToPanwn();
 }
 
-void AWeapon::OnUnEquip()
-{
 
-}
+
 
 /************************************************************************/
 /* targeting                                                                     */
@@ -373,49 +403,44 @@ void AWeapon::SimulateWeaponFire()
 			MuzzlePSCSecondary = NULL;
 		}
 	}
-
-	if (bLoopedFireAnim && bPlayingFireAnim)
+	if (!bPlayingFireAnim)
 	{
-		StopWeaponAnimation(FireAnim);
-		bPlayingFireAnim = false;
+		PlayWeaponAnimation(FireAnim);
+		bPlayingFireAnim = true;
 	}
 
+	
 	if (FireAC)
 	{
 		FireAC->FadeOut(0.1f, 0.0f);
 		FireAC = NULL;
-
 	}
+	
 }
 
 void AWeapon::StopSimulatingWeaponFire()
 {
-
+	if (bPlayingFireAnim)
+	{
+		StopWeaponAnimation(FireAnim);
+		bPlayingFireAnim = false;
+	}
 }
-float AWeapon::PlayWeaponAnimation(const FWeaponAnim& Animation)
+float AWeapon::PlayWeaponAnimation(UAnimMontage* Animation)
 {
 	float Duration = 0.0f;
 	if (MyPawn)
 	{
-		UAnimMontage* UseAnim = MyPawn->IsFirstPerson() ? Animation.Pawn1P : Animation.Pawn3P;
-		if (UseAnim)
-		{
-			Duration = MyPawn->PlayAnimMontage(UseAnim);
-		}
+			Duration = MyPawn->PlayAnimMontage(Animation);
+			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Blue, TEXT("PlayWeaponAnimation"));
 	}
-
 	return Duration;
 }
-
-void AWeapon::StopWeaponAnimation(const FWeaponAnim& Animation)
+void AWeapon::StopWeaponAnimation(UAnimMontage* Animation)
 {
 	if (MyPawn)
 	{
-		UAnimMontage* UseAnim = MyPawn->IsFirstPerson() ? Animation.Pawn1P : Animation.Pawn3P;
-		if (UseAnim)
-		{
-			MyPawn->StopAnimMontage(UseAnim);
-		}
+			MyPawn->StopAnimMontage(Animation);
 	}
 }
 /************************************************************************/

@@ -16,7 +16,6 @@
 #define COLLISION_PICKUP		ECC_GameTraceChannel3
 
 
-
 #define SHOOTER_SURFACE_Default		SurfaceType_Default
 #define SHOOTER_SURFACE_Concrete	SurfaceType1
 #define SHOOTER_SURFACE_Dirt		SurfaceType2

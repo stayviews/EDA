@@ -4,32 +4,40 @@
 #include "EDACharacter.generated.h"
 
 class UInputComponent;
+UENUM()
+enum  EInventorySlot
+{
+	/* For currently equipped items/weapons */
+	Hands,
+	/* For primary weapons on spine bone */
+	Spine,
+	/* Storage for small items like flashlight on pelvis */
+	Secondary,
+};
 
 UCLASS(config=Game)
 class AEDACharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category=Mesh)
-	class USkeletalMeshComponent* Mesh1P;
-
-	/** Gun mesh: 1st person view (seen only by self) */
-	UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
-	class USkeletalMeshComponent* FP_Gun;
 
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* CameraComp;
-
-
 	/* Boom to handle distance to player mesh. */
-	UPROPERTY(VisibleAnywhere, Category = "Camera")
-	USpringArmComponent* CameraBoomComp;
+	
 
+	UPROPERTY(VisibleAnywhere, Category = "Camera")
+		USpringArmComponent* CameraBoomComp;
+public:
+	FORCEINLINE UCameraComponent* GetCameraComponent()
+	{
+		return CameraComp;
+	}
 /************************************************************************/
 /* sound                                                                     */
 /************************************************************************/
+private:
 	/** sound played when targeting state changes */
 	UPROPERTY(EditDefaultsOnly, Category = Pawn)
 		USoundCue* TargetingSound;
@@ -139,17 +147,9 @@ protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
 	// End of APawn interface
 
-	/* 
-	 * Configures input for touchscreen devices if there is a valid touch interface for doing so 
-	 *
-	 * @param	InputComponent	The input component pointer to bind controls to
-	 * @returns true if touch controls were enabled.
-	 */
-	bool EnableTouchscreenMovement(UInputComponent* InputComponent);
+
 
 public:
-	/** Returns Mesh1P subobject **/
-	FORCEINLINE class USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCameraComponent() const { return CameraComp; }
 	UFUNCTION(BlueprintCallable, Category = Mesh)
@@ -158,36 +158,52 @@ public:
 /* weapon spawn equip tooggle                                                                     */
 /********************************** **************************************/
 private:
+	
+	/* Attachpoint for active weapon/item in hands */
+	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
+		FName WeaponAttachPoint;
+	/* Attachpoint for items carried on the belt/pelvis. */
+	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
+		FName PelvisAttachPoint;
+	/* Attachpoint for primary weapons */
+	UPROPERTY(EditDefaultsOnly, Category = "Sockets")
+		FName SpineAttachPoint;
+public:
 	UPROPERTY(EditDefaultsOnly, Category = Inventory)
 	TArray<TSubclassOf<class AWeapon>> DefaultInventoryClasses;
 	UPROPERTY(Transient, EditDefaultsOnly, Replicated)
 	TArray<class AWeapon*> Inventory;
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentWeapon)
 	class AWeapon* CurrentWeapon;
+	class AWeapon* SpineWeapon;
 	class AWeapon* PreviousWeapon;
+
+
 public:
 	UFUNCTION()
 	void OnRep_CurrentWeapon();
+	FName GetInventoryAttachPoint(EInventorySlot Slot) const;
 	void SpawnDefaultInventory();
 	void AddWeapon(class AWeapon* Weapon);
+	//change current Weapon
 	void EquipWeapon(AWeapon* Weapon);
 	UFUNCTION(Reliable,Server,WithValidation)
 	void ServerEquipWeapon(AWeapon* Weapon);
 	void ServerEquipWeapon_Implementation(AWeapon* Weapon);
 	bool ServerEquipWeapon_Validate(AWeapon* Weapon);
-
+	
 	void SetCurrentWeapon(class AWeapon* NewWeapon);
 	void OnNextWeapon();
 	void OnPrevWeapon();
 	void ToggleWeapon1();
 	void ToggleWeapon2();
 	void ToggleWeapon3();
-	void ToggleWeapon4();
 /************************************************************************/
 /* shoot                                                                     */
 /************************************************************************/
 
-
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	bool IsFiring() const;
 	bool IsAlive() const;
 	bool CanFire() const;
 	void StopWeaponFire();

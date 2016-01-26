@@ -38,14 +38,6 @@ AEDACharacter::AEDACharacter()
 
 
 
-
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
-	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
-	Mesh1P->SetOnlyOwnerSee(true);
-	Mesh1P->AttachParent = CameraComp;
-	Mesh1P->bCastDynamicShadow = false;
-	Mesh1P->CastShadow = false;
-
 	// Default offset from the character location for projectiles to spawn
 	GunOffset = FVector(100.0f, 30.0f, 10.0f);
 
@@ -54,6 +46,12 @@ AEDACharacter::AEDACharacter()
 	maxHealth = 100;
 	Health = maxHealth;
 	bIsTargeting = false;
+
+
+	/* Names as specified in the character skeleton */
+	WeaponAttachPoint = TEXT("WeaponSocket");
+	PelvisAttachPoint = TEXT("PelvisSocket");
+	SpineAttachPoint = TEXT("SpineSocket");
 }
 
 /************************************************************************/
@@ -81,14 +79,6 @@ void AEDACharacter::PostInitializeComponents()
 		Health = maxHealth;
 		SpawnDefaultInventory();
 	}
-		
-	
-	
-	if (Inventory.Num()>0)
-	{
-		CurrentWeapon = Inventory[0];
-	}
-	
 }
 
 
@@ -100,7 +90,6 @@ FRotator AEDACharacter::GetAimOffsets() const
 
 	return AimRotLS;
 }
-
 //////////////////////////////////////////////////////////////////////////
 // Input
 
@@ -113,11 +102,10 @@ void AEDACharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 	
 	//InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AEDACharacter::TouchStarted);
-	if( EnableTouchscreenMovement(InputComponent) == false )
-	{
-		InputComponent->BindAction("Fire", IE_Pressed, this, &AEDACharacter::OnStartFire);
-		InputComponent->BindAction("Fire", IE_Released, this, &AEDACharacter::OnStopFire);
-	}
+
+	InputComponent->BindAction("Fire", IE_Pressed, this, &AEDACharacter::OnStartFire);
+	InputComponent->BindAction("Fire", IE_Released, this, &AEDACharacter::OnStopFire);
+	
 	InputComponent->BindAction("Targeting", IE_Pressed, this, &AEDACharacter::OnStartTargeting);
 	InputComponent->BindAction("Targeting", IE_Released, this, &AEDACharacter::OnStopTargeting);
 
@@ -133,10 +121,10 @@ void AEDACharacter::SetupPlayerInputComponent(class UInputComponent* InputCompon
 	InputComponent->BindAxis("LookUpRate", this, &AEDACharacter::LookUpAtRate);
 	InputComponent->BindAction("NextWeapon", IE_Pressed, this, &AEDACharacter::OnNextWeapon);
 	InputComponent->BindAction("PrevWeapon", IE_Pressed, this, &AEDACharacter::OnPrevWeapon);
-	InputComponent->BindAction("Targeting", IE_Pressed, this, &AEDACharacter::ToggleWeapon1);
-	InputComponent->BindAction("Targeting", IE_Pressed, this, &AEDACharacter::ToggleWeapon2);
-	InputComponent->BindAction("Targeting", IE_Pressed, this, &AEDACharacter::ToggleWeapon3);
-	InputComponent->BindAction("Targeting", IE_Pressed, this, &AEDACharacter::ToggleWeapon4);
+	InputComponent->BindAction("ToggleWeapon1", IE_Pressed, this, &AEDACharacter::ToggleWeapon1);
+	InputComponent->BindAction("ToggleWeapon2", IE_Pressed, this, &AEDACharacter::ToggleWeapon2);
+	InputComponent->BindAction("ToggleWeapon3", IE_Pressed, this, &AEDACharacter::ToggleWeapon3);
+	
 
 }
 
@@ -243,35 +231,34 @@ void AEDACharacter::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-
-
-bool AEDACharacter::EnableTouchscreenMovement(class UInputComponent* InputComponent)
-{
-	bool bResult = false;
-	if(FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch )
-	{
-		bResult = true;
-		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AEDACharacter::BeginTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Released, this, &AEDACharacter::EndTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AEDACharacter::TouchUpdate);
-	}
-	return bResult;
-}
-
 bool AEDACharacter::IsFirstPerson() const
 {
 	return IsAlive() && Controller && Controller->IsLocalPlayerController();
 }
 
-
-
 void AEDACharacter::OnRep_CurrentWeapon()
 {
-
+	SetCurrentWeapon(CurrentWeapon);
 }
 /************************************************************************/
 /* weapon euqip toogle                                                        */
 /************************************************************************/
+FName AEDACharacter::GetInventoryAttachPoint(EInventorySlot Slot) const
+{
+	/* Return the socket name for the specified storage slot */
+	switch (Slot)
+	{
+	case EInventorySlot::Hands:
+		return WeaponAttachPoint;
+	case EInventorySlot::Spine:
+		return SpineAttachPoint;
+	case EInventorySlot::Secondary:
+		return PelvisAttachPoint;
+	default:
+		// Not implemented.
+		return "";
+	}
+}
 void AEDACharacter::SetCurrentWeapon(class AWeapon* NewWeapon)
 {
 	/* Maintain a reference for visual weapon swapping */
@@ -280,13 +267,12 @@ void AEDACharacter::SetCurrentWeapon(class AWeapon* NewWeapon)
 	AWeapon* LocalLastWeapon = nullptr;
 	if (CurrentWeapon)
 	{
-		LocalLastWeapon = LastWeapon;
+		LocalLastWeapon = CurrentWeapon;
 	}
 	else if (NewWeapon != CurrentWeapon)
 	{
 		LocalLastWeapon = CurrentWeapon;
 	}
-
 	// UnEquip the current
 	bool bHasPreviousWeapon = false;
 	if (LocalLastWeapon)
@@ -294,16 +280,13 @@ void AEDACharacter::SetCurrentWeapon(class AWeapon* NewWeapon)
 		LocalLastWeapon->OnUnEquip();
 		bHasPreviousWeapon = true;
 	}
-
 	CurrentWeapon = NewWeapon;
-
 	if (NewWeapon)
 	{
 		NewWeapon->SetOwningPawn(this);
 		/* Only play equip animation when we already hold an item in hands */
 		NewWeapon->OnEquip(bHasPreviousWeapon);
 	}
-
 	/* NOTE: If you don't have an equip animation w/ animnotify to swap the meshes halfway through, then uncomment this to immediately swap instead */
 	//SwapToNewWeaponMesh();
 }
@@ -314,7 +297,6 @@ void AEDACharacter::EquipWeapon(AWeapon* Weapon)
 		/* Ignore if trying to equip already equipped weapon */
 		if (Weapon == CurrentWeapon)
 			return;
-
 		if (Role == ROLE_Authority)
 		{
 			SetCurrentWeapon(Weapon);
@@ -359,25 +341,32 @@ void AEDACharacter::OnPrevWeapon()
 
 void AEDACharacter::ToggleWeapon1()
 {
-
+	if (SpineWeapon)
+	{
+		EquipWeapon(SpineWeapon);
+	}
 }
-
 
 void AEDACharacter::ToggleWeapon2()
 {
-
+	if (Inventory.Num() >= 2)
+	{
+		/* Find first weapon that uses secondary slot. */
+		for (int32 i = 0; i < Inventory.Num(); i++)
+		{
+			AWeapon* Weapon = Inventory[i];
+			if (Weapon->GetStorageSlot() == EInventorySlot::Secondary)
+			{
+				EquipWeapon(Weapon);
+			}
+		}
+	}
 }
 
 void AEDACharacter::ToggleWeapon3()
 {
 
 }
-
-void AEDACharacter::ToggleWeapon4()
-{
-
-}
-
 /************************************************************************/
 /* targeting                                                                     */
 /************************************************************************/
@@ -391,10 +380,6 @@ void AEDACharacter::OnStartTargeting()
 	AEDAPlayerController* MyPC = Cast<AEDAPlayerController>(Controller);
 	if (MyPC && MyPC->IsGameInputAllowed())
 	{
-// 		if (IsRunning())
-// 		{
-// 			SetRunning(false, false);
-// 		}
 		SetTargeting(true);
 	}
 }
@@ -446,14 +431,22 @@ void AEDACharacter::SpawnDefaultInventory()
 				AddWeapon(NewWeapon);
 			}
 		}
-		UE_LOG(LogTemp, Warning, TEXT("SpawnDefaultWeapon executed"));
 }
 void AEDACharacter::AddWeapon(class AWeapon* Weapon)
 {
 	
 		Weapon->OnEnterInventory(this);
 		Inventory.AddUnique(Weapon);
-	
+		// Equip first weapon in inventory
+		if (Inventory.Num() > 0 && CurrentWeapon == nullptr)
+		{
+			EquipWeapon(Inventory[0]);
+		}
+		if (Inventory.Num() > 1 && CurrentWeapon != nullptr)
+		{
+			SpineWeapon = Inventory[1];
+			SpineWeapon->AttachWeaponToPanwn(SpineWeapon->StorageSlot);
+		}
 }
 bool AEDACharacter::IsAlive() const
 {
@@ -469,7 +462,6 @@ void AEDACharacter::StopWeaponFire()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StopFire();
-
 	}
 
 }
@@ -496,7 +488,10 @@ float AEDACharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& D
 	
 	return ActualDamage;
 }
-
+bool AEDACharacter::IsFiring() const
+{
+	return CurrentWeapon && CurrentWeapon->GetCurrentState() == EWeaponState::Firing;
+}
 void AEDACharacter::PlayHit(float DamageTaken, struct FDamageEvent const& DamageEvent, class APawn* PawnInstigator, class AActor* DamageCauser)
 {
 

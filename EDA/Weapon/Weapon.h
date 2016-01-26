@@ -4,6 +4,7 @@
 
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
+
 UENUM()
 enum EWeaponState
 {
@@ -18,20 +19,6 @@ enum  EAmmoType
 	EBullet,
 	ESpread,
 };
-USTRUCT()
-struct FWeaponAnim
-{
-	GENERATED_USTRUCT_BODY()
-
-	/** animation played on pawn (1st person view) */
-	UPROPERTY(EditDefaultsOnly, Category = Animation)
-	UAnimMontage* Pawn1P;
-
-	/** animation played on pawn (3rd person view) */
-	UPROPERTY(EditDefaultsOnly, Category = Animation)
-	UAnimMontage* Pawn3P;
-};
-
 USTRUCT()
 struct FWeaponData
 {
@@ -101,7 +88,8 @@ protected:
 /* effect                                                                     */
 /************************************************************************/	
 private:
-
+//////////////////////////////////////////////////////////////////////////
+//sound
 		/** firing audio (bLoopedFireSound set) */
 		UPROPERTY(Transient)
 		UAudioComponent* FireAC;
@@ -149,22 +137,23 @@ private:
 		/** reload sound */
 		UPROPERTY(EditDefaultsOnly, Category = Sound)
 		USoundCue* ReloadSound;
-
-		/** reload animations */
-		UPROPERTY(EditDefaultsOnly, Category = Animation)
-		FWeaponAnim ReloadAnim;
-
 		/** equip sound */
 		UPROPERTY(EditDefaultsOnly, Category = Sound)
 		USoundCue* EquipSound;
+		/** reload animations */
+		
+//////////////////////////////////////////////////////////////////////////
+//animation
+		
+		UPROPERTY(EditDefaultsOnly, Category = Animation)
+		UAnimMontage* ReloadAnim;
 
 		/** equip animations */
 		UPROPERTY(EditDefaultsOnly, Category = Animation)
-		FWeaponAnim EquipAnim;
+		UAnimMontage* EquipAnim;
 
-		/** fire animations */
-		UPROPERTY(EditDefaultsOnly, Category = Animation)
-		FWeaponAnim FireAnim;
+	    UPROPERTY(EditDefaultsOnly, Category = Animation)
+	    UAnimMontage* FireAnim;
 
 		/** is muzzle FX looped? */
 		UPROPERTY(EditDefaultsOnly, Category = Effects)
@@ -200,10 +189,10 @@ public:
 	/** Called in network play to stop cosmetic fx (e.g. for a looping shot). */
 	virtual void StopSimulatingWeaponFire();
 	/** play weapon animations */
-	float PlayWeaponAnimation(const FWeaponAnim& Animation);
+	float PlayWeaponAnimation(UAnimMontage* Animation);
 
 	/** stop playing weapon animations */
-	void StopWeaponAnimation(const FWeaponAnim& Animation);
+	void StopWeaponAnimation(UAnimMontage* Animation);
 public:
 /************************************************************************/
 /* pawn                                                                */
@@ -212,6 +201,11 @@ public:
 	class AEDACharacter* MyPawn;
 	UFUNCTION()
 	void OnRep_MyPawn();
+	UPROPERTY(EditDefaultsOnly, Category = Weapon)
+	TEnumAsByte<EInventorySlot> StorageSlot;
+	//Attach mesh ToPanwn
+	void AttachWeaponToPanwn(EInventorySlot Slot = EInventorySlot::Hands);
+	void DetachMeshFromPawn();
 //////////////////////////////////////////////////////////////////////////
 //equip
    /** last time when this weapon was switched to */
@@ -226,6 +220,10 @@ public:
 	void OnEquip(bool bPlayAnimation);
 	void OnEquipFinished();
 	void OnUnEquip();
+	FORCEINLINE EInventorySlot GetStorageSlot()
+	{
+		return StorageSlot;
+	}
 /************************************************************************/
 /* get weapon data                                                                     */
 /************************************************************************/

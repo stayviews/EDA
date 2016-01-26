@@ -189,7 +189,7 @@ public:
 	/** Called in network play to stop cosmetic fx (e.g. for a looping shot). */
 	virtual void StopSimulatingWeaponFire();
 	/** play weapon animations */
-	float PlayWeaponAnimation(UAnimMontage* Animation);
+	float PlayWeaponAnimation(UAnimMontage* Animation,float InRate=1);
 
 	/** stop playing weapon animations */
 	void StopWeaponAnimation(UAnimMontage* Animation);

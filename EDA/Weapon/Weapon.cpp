@@ -411,7 +411,7 @@ void AWeapon::SimulateWeaponFire()
 	}
 	if (!bPlayingFireAnim)
 	{
-		PlayWeaponAnimation(FireAnim);
+		PlayWeaponAnimation(FireAnim,1);
 		bPlayingFireAnim = true;
 	}
 

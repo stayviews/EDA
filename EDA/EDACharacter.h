@@ -175,13 +175,12 @@ public:
 	TArray<class AWeapon*> Inventory;
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_CurrentWeapon)
 	class AWeapon* CurrentWeapon;
+	UPROPERTY(Transient,Replicated)
 	class AWeapon* SpineWeapon;
 	class AWeapon* PreviousWeapon;
-
-
 public:
 	UFUNCTION()
-	void OnRep_CurrentWeapon();
+	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
 	FName GetInventoryAttachPoint(EInventorySlot Slot) const;
 	void SpawnDefaultInventory();
 	void AddWeapon(class AWeapon* Weapon);
@@ -192,12 +191,13 @@ public:
 	void ServerEquipWeapon_Implementation(AWeapon* Weapon);
 	bool ServerEquipWeapon_Validate(AWeapon* Weapon);
 	
-	void SetCurrentWeapon(class AWeapon* NewWeapon);
+	void SetCurrentWeapon(class AWeapon* NewWeapon, class AWeapon* LastWeapon= nullptr);
 	void OnNextWeapon();
 	void OnPrevWeapon();
 	void ToggleWeapon1();
 	void ToggleWeapon2();
 	void ToggleWeapon3();
+	void SwapToNewWeaponMesh();
 /************************************************************************/
 /* shoot                                                                     */
 /************************************************************************/

@@ -62,8 +62,10 @@ void AWeapon::DetermineWeaponState(EWeaponState NewState)
 		SetWeaponState(EWeaponState::Firing);
 		break;
 	case Reloading:
+		SetWeaponState(EWeaponState::Reloading);
 		break;
 	case Equipping:
+		SetWeaponState(EWeaponState::Equipping);
 		break;
 	default:
 		break;
@@ -117,6 +119,7 @@ void AWeapon::AttachWeaponToPanwn(EInventorySlot Slot)
 		FName AttachPoint = MyPawn->GetInventoryAttachPoint(Slot);
 		weaponMesh->SetHiddenInGame(false);
 		weaponMesh->AttachTo(PawnMesh, AttachPoint, EAttachLocation::SnapToTarget);
+		UE_LOG(LogTemp, Warning, TEXT("AttachWeaponToPanwn"));
 	}
 }
 void AWeapon::DetachMeshFromPawn()
@@ -151,6 +154,7 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 	if (bPlayAnimation)
 	{
 		float Duration = PlayWeaponAnimation(EquipAnim);
+		UE_LOG(LogTemp, Warning, TEXT("PlayWeaponAnimation"));
 		if (Duration <= 0.0f)
 		{
 			// Failsafe in case animation is missing
@@ -159,7 +163,7 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 		EquipStartedTime = GetWorld()->TimeSeconds;
 		EquipDuration = Duration;
 
-		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, Duration, false);
+		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, 0.6f, false);
 	}
 	else
 	{
@@ -169,10 +173,12 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 // 	if (MyPawn && MyPawn->IsLocallyControlled())
 // 	{
 // 		PlayWeaponSound(EquipSound);
-// 	}
+// 	}
+	
 }
 void AWeapon::OnUnEquip()
 {
+	
 	bIsEquipped = false;
 	StopFire();
 
@@ -183,12 +189,12 @@ void AWeapon::OnUnEquip()
 		GetWorldTimerManager().ClearTimer(EquipFinishedTimerHandle);
 	}
 	DetermineWeaponState(EWeaponState::Idle);
+	UE_LOG(LogTemp, Warning, TEXT("OnUnEquip"));
 }
-
 void AWeapon::OnEquipFinished()
 {
 	DetermineWeaponState(EWeaponState::Idle);
-	AttachWeaponToPanwn();
+	AttachWeaponToPanwn(EInventorySlot::Hands);
 }
 
 
@@ -360,7 +366,7 @@ void AWeapon::HandleFiring()
 		}
 	}
 	LastFireTime = GetWorld()->GetTimeSeconds();
-	UE_LOG(LogTemp, Warning, TEXT("HandleFiring"));
+	
 }
 /************************************************************************/
 /* ammo                                                                     */
@@ -432,7 +438,6 @@ float AWeapon::PlayWeaponAnimation(UAnimMontage* Animation)
 	if (MyPawn)
 	{
 			Duration = MyPawn->PlayAnimMontage(Animation);
-			GEngine->AddOnScreenDebugMessage(-1, 2, FColor::Blue, TEXT("PlayWeaponAnimation"));
 	}
 	return Duration;
 }

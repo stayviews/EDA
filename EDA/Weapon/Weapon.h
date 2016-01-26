@@ -334,7 +334,7 @@ public:
 	void UseAmmo();
 
 	void ProcessInstantHit_Confirmed(const FHitResult& Impact, const FVector& Origin, const FVector& ShootDir, int32 RandomSeed, float ReticleSpread);
-
+	
 
 };
 

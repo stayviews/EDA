@@ -434,7 +434,6 @@ void AWeapon::StopSimulatingWeaponFire()
 }
 float AWeapon::PlayWeaponAnimation(UAnimMontage* Animation,float InPlayRate)
 {
-
 	float Duration = 0.0f;
 	if (MyPawn)
 	{

@@ -153,7 +153,7 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 	if (bPlayAnimation)
 	{
 		DetermineWeaponState(EWeaponState::Equipping);
-		float Duration = PlayWeaponAnimation(EquipAnim);
+		float Duration = PlayWeaponAnimation(EquipAnim,3);
 		UE_LOG(LogTemp, Warning, TEXT("PlayWeaponAnimation"));
 		if (Duration <= 0.0f)
 		{
@@ -162,8 +162,8 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 		}
 		EquipStartedTime = GetWorld()->TimeSeconds;
 		EquipDuration = Duration;
-		GetWorldTimerManager().SetTimer(SwapWeaponFinishedTimerHandle, this, &AWeapon::OnSwapWeaponFinished, 0.6f, false);
-		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, Duration-0.5, false);
+		GetWorldTimerManager().SetTimer(SwapWeaponFinishedTimerHandle, this, &AWeapon::OnSwapWeaponFinished, Duration*0.1, false);
+		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, Duration-1.0, false);
 	}
 // 	if (MyPawn && MyPawn->IsLocallyControlled())
 // 	{
@@ -432,12 +432,13 @@ void AWeapon::StopSimulatingWeaponFire()
 		bPlayingFireAnim = false;
 	}
 }
-float AWeapon::PlayWeaponAnimation(UAnimMontage* Animation)
+float AWeapon::PlayWeaponAnimation(UAnimMontage* Animation,float InPlayRate)
 {
+
 	float Duration = 0.0f;
 	if (MyPawn)
 	{
-			Duration = MyPawn->PlayAnimMontage(Animation);
+			Duration = MyPawn->PlayAnimMontage(Animation,InPlayRate);
 	}
 	return Duration;
 }

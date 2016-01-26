@@ -29,7 +29,6 @@ AEDACharacter::AEDACharacter()
 	CameraBoomComp->bUsePawnControlRotation = true;
 	CameraBoomComp->AttachParent = GetRootComponent();
 
-
 	// Create a CameraComponent	
 	CameraComp = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	CameraComp->AttachParent = CameraBoomComp;

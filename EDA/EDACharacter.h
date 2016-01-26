@@ -75,7 +75,7 @@ public:
 	float maxHealth;
 
 	/** spawn inventory, setup initial variables */
-	virtual void PostInitializeComponents() override;
+	virtual void BeginPlay() override;
 	
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)

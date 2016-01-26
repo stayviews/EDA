@@ -148,11 +148,11 @@ void AWeapon::OnEnterInventory(class AEDACharacter* NewOwner)
 
 
 void AWeapon::OnEquip(bool bPlayAnimation)
-{
+{	
 	bPendingEquip = true;
-	DetermineWeaponState(EWeaponState::Equipping);
 	if (bPlayAnimation)
 	{
+		DetermineWeaponState(EWeaponState::Equipping);
 		float Duration = PlayWeaponAnimation(EquipAnim);
 		UE_LOG(LogTemp, Warning, TEXT("PlayWeaponAnimation"));
 		if (Duration <= 0.0f)
@@ -162,19 +162,18 @@ void AWeapon::OnEquip(bool bPlayAnimation)
 		}
 		EquipStartedTime = GetWorld()->TimeSeconds;
 		EquipDuration = Duration;
-
-		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, 0.6f, false);
-	}
-	else
-	{
-		/* Immediately finish equipping */
-		OnEquipFinished();
+		GetWorldTimerManager().SetTimer(SwapWeaponFinishedTimerHandle, this, &AWeapon::OnSwapWeaponFinished, 0.6f, false);
+		GetWorldTimerManager().SetTimer(EquipFinishedTimerHandle, this, &AWeapon::OnEquipFinished, Duration-0.5, false);
 	}
 // 	if (MyPawn && MyPawn->IsLocallyControlled())
 // 	{
 // 		PlayWeaponSound(EquipSound);
 // 	}
-	
+	else
+	{
+		//first weapon when spawn £¬not play Equip anim
+		OnSwapWeaponFinished();
+	}
 }
 void AWeapon::OnUnEquip()
 {
@@ -194,11 +193,12 @@ void AWeapon::OnUnEquip()
 void AWeapon::OnEquipFinished()
 {
 	DetermineWeaponState(EWeaponState::Idle);
-	AttachWeaponToPanwn(EInventorySlot::Hands);
 }
-
-
-
+void AWeapon::OnSwapWeaponFinished()
+{
+	AttachWeaponToPanwn(EInventorySlot::Hands);
+	GetWorldTimerManager().ClearTimer(SwapWeaponFinishedTimerHandle);
+}
 
 /************************************************************************/
 /* targeting                                                                     */

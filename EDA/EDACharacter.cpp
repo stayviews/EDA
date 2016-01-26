@@ -71,7 +71,7 @@ void AEDACharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 }
 
 
-void AEDACharacter::PostInitializeComponents()
+void AEDACharacter::BeginPlay()
 {
 	Super::PostInitializeComponents();
 	if (Role = ROLE_Authority)
@@ -358,7 +358,7 @@ void AEDACharacter::OnPrevWeapon()
 
 void AEDACharacter::ToggleWeapon1()
 {
-	if (Inventory[0])
+	if (Inventory[0] && CurrentWeapon->CurrentState != Equipping)
 	{
 		EquipWeapon(Inventory[0]);
 	}
@@ -366,7 +366,7 @@ void AEDACharacter::ToggleWeapon1()
 
 void AEDACharacter::ToggleWeapon2()
 {
-	if (Inventory[1])
+	if (Inventory[1] && CurrentWeapon->CurrentState != Equipping)
 	{
 		EquipWeapon(Inventory[1]);
 	}
@@ -374,7 +374,7 @@ void AEDACharacter::ToggleWeapon2()
 
 void AEDACharacter::ToggleWeapon3()
 {
-	if (Inventory[2])
+	if (Inventory[2]&&CurrentWeapon->CurrentState!=Equipping)
 	{
 		EquipWeapon(Inventory[2]);
 	}

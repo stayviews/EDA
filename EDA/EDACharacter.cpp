@@ -71,7 +71,7 @@ void AEDACharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Out
 }
 
 
-void AEDACharacter::PostInitializeComponents()
+void AEDACharacter::BeginPlay()
 {
 	Super::PostInitializeComponents();
 	if (Role = ROLE_Authority)
@@ -236,9 +236,9 @@ bool AEDACharacter::IsFirstPerson() const
 	return IsAlive() && Controller && Controller->IsLocalPlayerController();
 }
 
-void AEDACharacter::OnRep_CurrentWeapon()
+void AEDACharacter::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
-	SetCurrentWeapon(CurrentWeapon);
+	SetCurrentWeapon(CurrentWeapon, LastWeapon);
 }
 /************************************************************************/
 /* weapon euqip toogle                                                        */
@@ -259,36 +259,53 @@ FName AEDACharacter::GetInventoryAttachPoint(EInventorySlot Slot) const
 		return "";
 	}
 }
-void AEDACharacter::SetCurrentWeapon(class AWeapon* NewWeapon)
+void AEDACharacter::SetCurrentWeapon(class AWeapon* NewWeapon, class AWeapon* LastWeapon)
 {
 	/* Maintain a reference for visual weapon swapping */
-	PreviousWeapon = CurrentWeapon;
+	PreviousWeapon = LastWeapon;
 
 	AWeapon* LocalLastWeapon = nullptr;
-	if (CurrentWeapon)
+	if (LastWeapon)
 	{
-		LocalLastWeapon = CurrentWeapon;
+		LocalLastWeapon = LastWeapon;
 	}
 	else if (NewWeapon != CurrentWeapon)
 	{
 		LocalLastWeapon = CurrentWeapon;
 	}
+
 	// UnEquip the current
 	bool bHasPreviousWeapon = false;
+
 	if (LocalLastWeapon)
 	{
 		LocalLastWeapon->OnUnEquip();
 		bHasPreviousWeapon = true;
 	}
+
 	CurrentWeapon = NewWeapon;
+
 	if (NewWeapon)
 	{
 		NewWeapon->SetOwningPawn(this);
 		/* Only play equip animation when we already hold an item in hands */
 		NewWeapon->OnEquip(bHasPreviousWeapon);
 	}
+
 	/* NOTE: If you don't have an equip animation w/ animnotify to swap the meshes halfway through, then uncomment this to immediately swap instead */
 	//SwapToNewWeaponMesh();
+}
+void AEDACharacter::SwapToNewWeaponMesh()
+{
+	if (PreviousWeapon)
+	{
+		PreviousWeapon->AttachWeaponToPanwn(PreviousWeapon->GetStorageSlot());
+	}
+
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->AttachWeaponToPanwn(EInventorySlot::Hands);
+	}
 }
 void AEDACharacter::EquipWeapon(AWeapon* Weapon)
 {
@@ -299,7 +316,7 @@ void AEDACharacter::EquipWeapon(AWeapon* Weapon)
 			return;
 		if (Role == ROLE_Authority)
 		{
-			SetCurrentWeapon(Weapon);
+			SetCurrentWeapon(Weapon, CurrentWeapon);
 		}
 		else
 		{
@@ -341,31 +358,26 @@ void AEDACharacter::OnPrevWeapon()
 
 void AEDACharacter::ToggleWeapon1()
 {
-	if (SpineWeapon)
+	if (Inventory[0] && CurrentWeapon->CurrentState != Equipping)
 	{
-		EquipWeapon(SpineWeapon);
+		EquipWeapon(Inventory[0]);
 	}
 }
 
 void AEDACharacter::ToggleWeapon2()
 {
-	if (Inventory.Num() >= 2)
+	if (Inventory[1] && CurrentWeapon->CurrentState != Equipping)
 	{
-		/* Find first weapon that uses secondary slot. */
-		for (int32 i = 0; i < Inventory.Num(); i++)
-		{
-			AWeapon* Weapon = Inventory[i];
-			if (Weapon->GetStorageSlot() == EInventorySlot::Secondary)
-			{
-				EquipWeapon(Weapon);
-			}
-		}
+		EquipWeapon(Inventory[1]);
 	}
 }
 
 void AEDACharacter::ToggleWeapon3()
 {
-
+	if (Inventory[2]&&CurrentWeapon->CurrentState!=Equipping)
+	{
+		EquipWeapon(Inventory[2]);
+	}
 }
 /************************************************************************/
 /* targeting                                                                     */
@@ -441,11 +453,6 @@ void AEDACharacter::AddWeapon(class AWeapon* Weapon)
 		if (Inventory.Num() > 0 && CurrentWeapon == nullptr)
 		{
 			EquipWeapon(Inventory[0]);
-		}
-		if (Inventory.Num() > 1 && CurrentWeapon != nullptr)
-		{
-			SpineWeapon = Inventory[1];
-			SpineWeapon->AttachWeaponToPanwn(SpineWeapon->StorageSlot);
 		}
 }
 bool AEDACharacter::IsAlive() const

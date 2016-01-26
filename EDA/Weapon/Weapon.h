@@ -216,9 +216,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Animation")
 	float NoEquipAnimDuration;
 	uint8 bPendingEquip : 1;
+	
 	FTimerHandle EquipFinishedTimerHandle;
+	
+	FTimerHandle SwapWeaponFinishedTimerHandle;
+	
 	void OnEquip(bool bPlayAnimation);
 	void OnEquipFinished();
+	void OnSwapWeaponFinished();
 	void OnUnEquip();
 	FORCEINLINE EInventorySlot GetStorageSlot()
 	{
@@ -334,7 +339,7 @@ public:
 	void UseAmmo();
 
 	void ProcessInstantHit_Confirmed(const FHitResult& Impact, const FVector& Origin, const FVector& ShootDir, int32 RandomSeed, float ReticleSpread);
-
+	
 
 };
 

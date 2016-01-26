@@ -189,11 +189,9 @@ public:
 	/** Called in network play to stop cosmetic fx (e.g. for a looping shot). */
 	virtual void StopSimulatingWeaponFire();
 	/** play weapon animations */
-<<<<<<< HEAD
-	float PlayWeaponAnimation(UAnimMontage* Animation,float InRate=1);
-=======
+
 	float PlayWeaponAnimation(UAnimMontage* Animation,float InPlayRate=1.0f);
->>>>>>> origin/master
+
 
 	/** stop playing weapon animations */
 	void StopWeaponAnimation(UAnimMontage* Animation);
@@ -233,6 +231,7 @@ public:
 	{
 		return StorageSlot;
 	}
+
 /************************************************************************/
 /* get weapon data                                                                     */
 /************************************************************************/

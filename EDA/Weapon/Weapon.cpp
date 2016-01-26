@@ -13,7 +13,7 @@ AWeapon::AWeapon()
 	
 	bReplicates = true;
 	bNetUseOwnerRelevancy = true;
-
+	targetingFOV = 65;
 
 	CurrentAmmo = 30;
 	CurrentAmmoInClip = 10;

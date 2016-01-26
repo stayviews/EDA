@@ -382,18 +382,12 @@ void AEDACharacter::ToggleWeapon3()
 /************************************************************************/
 /* targeting                                                                     */
 /************************************************************************/
-bool AEDACharacter::IsTargeting() const
-{
-	return bIsTargeting;
-}
 
 void AEDACharacter::OnStartTargeting()
 {
-	AEDAPlayerController* MyPC = Cast<AEDAPlayerController>(Controller);
-	if (MyPC && MyPC->IsGameInputAllowed())
-	{
-		SetTargeting(true);
-	}
+	
+    SetTargeting(true);
+	
 }
 void AEDACharacter::OnStopTargeting()
 {

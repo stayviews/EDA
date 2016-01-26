@@ -15,7 +15,7 @@ void AWeapon_Instant::OnRep_HitNotify()
 float AWeapon_Instant::GetCurrentSpread() const
 {
 	float FinalSpread = InstantConfig.WeaponSpread + CurrentFiringSpread;
-	if (MyPawn && MyPawn->IsTargeting())
+	if (MyPawn && MyPawn->bIsTargeting)
 	{
 		FinalSpread *= InstantConfig.TargetingSpreadMod;
 	}

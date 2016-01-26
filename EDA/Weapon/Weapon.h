@@ -279,6 +279,8 @@ public:
 /************************************************************************/
 /* target                                                                   */
 /************************************************************************/
+	UPROPERTY(EditDefaultsOnly, Category = Config)
+	float targetingFOV;
 	FVector GetAdjustedAim() const;
 	/** get the originating location for camera damage */
 	FVector GetCameraDamageStartLocation(const FVector& AimDir) const;

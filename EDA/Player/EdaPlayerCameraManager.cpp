@@ -2,7 +2,7 @@
 
 #include "EDA.h"
 #include "EdaPlayerCameraManager.h"
-
+#include "Weapon/Weapon.h"
 
 
 
@@ -30,7 +30,8 @@ void  AEdaPlayerCameraManager::UpdateCamera(float DeltaTime)
 	AEDACharacter* MyPawn = PCOwner ? Cast<AEDACharacter>(PCOwner->GetPawn()) : nullptr;
 	if (MyPawn)
 	{
-		const float TargetFOV = MyPawn->IsTargeting() ? TargetingFOV : NormalFOV;
+		TargetingFOV = MyPawn->CurrentWeapon->targetingFOV;
+		const float TargetFOV = MyPawn->bIsTargeting ? TargetingFOV : NormalFOV;
 		DefaultFOV = FMath::FInterpTo(DefaultFOV, TargetFOV, DeltaTime, 20.0f);
 		SetFOV(DefaultFOV);
 	}

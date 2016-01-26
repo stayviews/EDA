@@ -209,9 +209,8 @@ public:
 	void StopWeaponFire();
 //////////////////////////////////////////////////////////////////////////
 //targeting
-	UPROPERTY(BlueprintReadWrite,Transient, Replicated)
-	uint8 bIsTargeting : 1;
-	bool IsTargeting() const;
+	UPROPERTY(BlueprintReadWrite, Transient, Replicated)
+	uint8 bIsTargeting :1;
 	void OnStartTargeting();
 	void OnStopTargeting();
 	/** [server + local] change targeting state */
